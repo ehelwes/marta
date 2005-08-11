@@ -1,0 +1,96 @@
+#! /bin/sh
+#
+#  instchksp       Installera sp 
+#
+#  Ove Walter      Infodata AB
+#
+#  @(#)instchksp   1.0	041201
+#
+
+#set -x 
+
+PGM=`basename $0`
+PGMDIR=`dirname $0`
+
+TMP=/tmp/$PGM$$.
+TMPERR=${TMP}ERR
+TMP1=${TMP}1
+TMP2=${TMP}2
+
+# Städa vid avbrott
+trap "echo \"$PGM: Interrupted\" ; /bin/rm -f ${TMP}* >/dev/null 2>&1 ; exit ${EXIT_VA-1 }" 1 2 3 15
+
+exiting () # Clean up and exit
+{
+    /bin/rm -f ${TMP}*
+    exit ${1}
+}
+
+fel () # Print Error msg
+{
+   echo "$PGM: $1 " >>$TMPERR
+}
+
+# Check parameter
+
+if [ "$#" -ne 0 -a "$#" -ne 1 ]
+then
+    echo "Usage: $PGM " 
+    echo "Usage: $PGM filnamn" 
+    exiting 1
+fi
+ARONDIR=/pgmmm/stored_procedures/orgval/Sp
+ARONLEVDIR=.
+
+if [ "$#" -eq 1 ]
+then
+    INFIL=$1
+    echo $INFIL > $TMP2
+    INFIL=$TMP2
+else
+    ls *.sql > $TMP2
+    INFIL=$TMP2
+fi
+echo `date` > log.out
+
+for i in `cat $INFIL`
+do
+    SP=`echo $i | sed 's/\.sql//'`
+    if [ "$#" -eq 1 ]
+    then
+	echo "=========================" | tee -a $TMP1
+	echo "---sp katalog - sp leverans" | tee -a $TMP1
+	spfildiff $ARONDIR/$SP.sql $ARONLEVDIR/$SP.sql $SP.sql 
+	cat log.out >> $TMP1
+	echo "---sp katalog - aron systestdb" | tee -a $TMP1
+	spdiff $SP $ARONDIR aron systestdb
+	cat log.out >> $TMP1
+	echo "---sp katalog - bengt systest1" | tee -a $TMP1
+	spdiff $SP $ARONDIR bengt systest1
+	cat log.out >> $TMP1
+	echo "---sp katalog - bengt atest1" | tee -a $TMP1
+	spdiff $SP $ARONDIR bengt atest1 
+	cat log.out >> $TMP1
+    else 
+	echo "=========================" | tee -a $TMP1
+	echo "---sp katalog - sp leverans" | tee -a $TMP1
+	spfildiff $ARONDIR/$SP.sql $ARONLEVDIR/$SP.sql $SP.sql 
+	cat log.out >> $TMP1
+	echo "---sp leverans - aron systestdb" | tee -a $TMP1
+	spdiff $SP $ARONLEVDIR aron systestdb
+	cat log.out >> $TMP1
+	echo "---sp leverans - bengt systest1" | tee -a $TMP1
+	spdiff $SP $ARONLEVDIR bengt systest1
+	cat log.out >> $TMP1
+	echo "---sp leverans - bengt atest1" | tee -a $TMP1
+	spdiff $SP $ARONLEVDIR bengt atest1 
+	cat log.out >> $TMP1
+    fi
+  
+done 
+
+cp $TMP1 log.out
+
+# Exiting
+
+exiting 0
