@@ -9,7 +9,6 @@
 
 #set -x
 
-
 PGM=`basename $0`
 PGMDIR=`dirname $0`
 
