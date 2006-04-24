@@ -1,3 +1,0 @@
-HOST=$1
-DATABASE=$2
-rsh $HOST ". /opt/informix/config/svkyrk.init; dbschema -q -p all -d $DATABASE -t all "
