@@ -7,7 +7,7 @@
 #  @(#)$Id$
 #
 
-#set -x
+set -x
 
 
 PGM=`basename $0`
